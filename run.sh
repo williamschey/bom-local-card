@@ -100,6 +100,20 @@ clean_test() {
         fi
     fi
     
+    # Clean up cache directory (persisted between redeploys, but removed on full clean)
+    if [ -d "test-ha/cache" ]; then
+        echo "   Removing cache directory..."
+        if ! rm -rf test-ha/cache 2>/dev/null; then
+            # Use Docker to remove root-owned files
+            docker run --rm \
+                -v "$(pwd)/test-ha/cache:/cache:rw" \
+                -u root \
+                alpine:latest \
+                sh -c "rm -rf /cache/*" 2>/dev/null || true
+        fi
+        echo "   ✅ Cleared cache directory"
+    fi
+    
     # Optionally clean build artifacts
     if [ "${CLEAN_BUILD:-0}" = "1" ]; then
         echo "   Removing build artifacts..."
@@ -108,6 +122,33 @@ clean_test() {
     
     echo ""
     echo "✅ Cleanup complete. Run './run.sh test' to start fresh."
+}
+
+# Stop function - stops containers without removing data
+stop_test() {
+    echo "🛑 Stopping test environment (preserving cache and data)..."
+    
+    # Determine compose files to use
+    COMPOSE_FILES="-f docker-compose.test.yml"
+    if [ -f "docker-compose.test.local.yml" ]; then
+        COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.test.local.yml"
+    fi
+    
+    # Stop containers (preserve volumes to keep cache)
+    if docker compose version &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    elif command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker-compose"
+    else
+        echo "❌ Error: docker compose not found"
+        exit 1
+    fi
+    
+    if $DOCKER_COMPOSE_CMD $COMPOSE_FILES down 2>/dev/null; then
+        echo "✅ Test environment stopped (cache and data preserved)"
+    else
+        echo "⚠️  No running containers found or error stopping containers"
+    fi
 }
 
 # Update function - rebuilds card and updates running test environment
@@ -143,6 +184,9 @@ case "$COMMAND" in
     test)
         ./scripts/test.sh
         ;;
+    stop)
+        stop_test
+        ;;
     update)
         update_card "$BUILD_METHOD"
         ;;
@@ -155,6 +199,7 @@ case "$COMMAND" in
         echo "Commands:"
         echo "  build [docker|npm]  - Build the card (auto-detects method if not specified)"
         echo "  test                - Build and start test Home Assistant environment"
+        echo "  stop                - Stop test environment (preserves cache and data)"
         echo "  update [docker|npm] - Rebuild card and update running test environment"
         echo "                        (preserves HA state, auto-detects if containers running)"
         echo "  clean               - Clean test environment (stops containers, removes data)"
@@ -167,8 +212,9 @@ case "$COMMAND" in
         echo "  ./run.sh build          # Auto-detect: Docker (preferred) or npm"
         echo "  ./run.sh build docker   # Force Docker build"
         echo "  ./run.sh test           # Build and start test environment"
+        echo "  ./run.sh stop           # Stop test environment (preserves cache)"
         echo "  ./run.sh update         # Rebuild and update running environment"
-        echo "  ./run.sh clean          # Clean test environment"
+        echo "  ./run.sh clean          # Clean test environment (removes everything)"
         echo ""
         echo "Note: For more options (e.g., --service-path), use ./scripts/test.sh directly"
         exit 1

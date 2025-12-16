@@ -50,6 +50,60 @@ export interface CacheRangeInfo {
   };
 }
 
+// Metadata display configuration
+export interface MetadataDisplayConfig {
+  show_cache_status?: boolean;
+  show_observation_time?: boolean;
+  show_forecast_time?: boolean;
+  show_weather_station?: boolean;
+  show_distance?: boolean;
+  show_next_update?: boolean;
+  show_frame_times?: boolean;  // Show frame observation times
+  position?: 'above' | 'below' | 'overlay';
+  style?: 'cards' | 'compact' | 'minimal';
+}
+
+// Controls display configuration
+export interface ControlsDisplayConfig {
+  show_play_pause?: boolean;
+  show_prev_next?: boolean;
+  show_slider?: boolean;
+  show_nav_buttons?: boolean;  // First, -10, +10, Last
+  show_frame_info?: boolean;  // Frame X of Y, timestamp
+  position?: 'above' | 'below' | 'overlay';
+}
+
+// API Error Response structure matching the service
+export interface ApiErrorResponse {
+  errorCode: string;
+  message: string;
+  errorType: string;
+  details?: Record<string, any>;
+  suggestions?: Record<string, any>;
+  timestamp?: string;
+}
+
+// Error state interface
+export interface ErrorState {
+  message: string;
+  type: 'network' | 'cache' | 'config' | 'validation' | 'unknown';
+  retryable: boolean;
+  retryAction?: () => void;
+  retryAfter?: number; // seconds (undefined if manual refresh recommended)
+  errorCode?: string;
+  details?: Record<string, any>; // Includes action, refreshEndpoint, statusEndpoint from API suggestions
+}
+
+// Grid options for HA sections view
+export interface GridOptions {
+  columns: number;
+  rows: number;
+  min_columns?: number;
+  min_rows?: number;
+  max_columns?: number;
+  max_rows?: number;
+}
+
 // Card configuration
 export interface BomLocalRadarCardConfig extends LovelaceCardConfig {
   type: 'custom:bom-local-radar-card';
@@ -60,9 +114,22 @@ export interface BomLocalRadarCardConfig extends LovelaceCardConfig {
   state: string;  // Required: state abbreviation (e.g., "QLD")
   
   // Display
+  show_card_title?: boolean;  // Show/hide card title (uses HA card header)
   card_title?: string;
-  show_timestamp?: boolean;
-  show_metadata?: boolean;
+  show_timestamp?: boolean;  // Deprecated - use show_metadata instead
+  show_metadata?: boolean | MetadataDisplayConfig;  // Granular metadata display
+  
+  // Control visibility
+  show_controls?: boolean | ControlsDisplayConfig;  // Granular control visibility
+  
+  // Image display
+  image_zoom?: number;  // 1.0 = 100%, 1.5 = 150%, etc. (0.5 to 3.0)
+  image_fit?: 'contain' | 'cover' | 'fill';
+  
+  // Overlay options
+  overlay_controls?: boolean;  // Overlay controls on image
+  overlay_position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
+  overlay_opacity?: number;  // 0.0 to 1.0
   
   // Slideshow configuration
   timespan?: 'latest' | '1h' | '3h' | '6h' | '12h' | '24h' | 'custom';  // Historical data timespan
@@ -75,6 +142,9 @@ export interface BomLocalRadarCardConfig extends LovelaceCardConfig {
   // Custom time range (for timespan: 'custom')
   custom_start_time?: string;  // ISO 8601 datetime
   custom_end_time?: string;  // ISO 8601 datetime
+  
+  // Localization
+  locale?: string;  // Override locale (defaults to HA locale)
 }
 
 

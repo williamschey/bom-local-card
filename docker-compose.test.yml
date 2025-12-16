@@ -5,6 +5,9 @@ services:
     container_name: bom-card-test-service
     ports:
       - "8082:8080"
+    volumes:
+      # Persist cache between redeploys
+      - ./test-ha/cache:/app/cache
     environment:
       # ASP.NET Core configuration
       - ASPNETCORE_ENVIRONMENT=Production
@@ -20,6 +23,9 @@ services:
       - CACHEDIRECTORY=/app/cache
       - CACHERETENTIONHOURS=24
       - TIMEZONE=Australia/Brisbane
+      # Debug output enabled by default for test environment
+      - DEBUG__ENABLED=true
+      - DEBUG__WAITMS=2000
     shm_size: '1gb'
     ipc: host
     restart: unless-stopped

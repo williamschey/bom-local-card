@@ -389,25 +389,15 @@ if [ -f "docker-compose.test.local.yml" ]; then
     COMPOSE_FILES_CLEAN="$COMPOSE_FILES_CLEAN -f docker-compose.test.local.yml"
 fi
 
-# Stop and remove containers with volumes
-docker compose $COMPOSE_FILES_CLEAN down -v 2>/dev/null || docker-compose $COMPOSE_FILES_CLEAN down -v 2>/dev/null || true
+# Stop and remove containers (preserve volumes to keep cache)
+docker compose $COMPOSE_FILES_CLEAN down 2>/dev/null || docker-compose $COMPOSE_FILES_CLEAN down 2>/dev/null || true
 
-# Clean up .storage directory if it exists (using Docker if needed)
-if [ -d "test-ha/config/.storage" ]; then
-    echo "🧹 Cleaning up existing .storage directory..."
-    if ! rm -rf test-ha/config/.storage 2>/dev/null; then
-        echo "   Removing with Docker (files may be owned by root)..."
-        docker run --rm \
-            -v "$(pwd)/test-ha/config:/config:rw" \
-            -u root \
-            alpine:latest \
-            sh -c "rm -rf /config/.storage" 2>/dev/null || true
-    fi
-fi
-
+# Preserve .storage directory to keep user accounts and HA state
+# Only create it if it doesn't exist
 echo "📦 Ensuring test directories exist..."
 mkdir -p test-ha/config/.storage
 mkdir -p test-ha/config/www
+mkdir -p test-ha/cache
 
 # Ensure directories exist (Docker will create files as current user due to user: setting in compose)
 # Copy built card file to www directory (for /local/ access in HA)
@@ -486,9 +476,11 @@ done
 
 # Create onboarding bypass - skip everything EXCEPT user creation
 # This way HA will prompt for user creation but skip other setup steps
-echo "📝 Creating onboarding bypass..."
-mkdir -p test-ha/config/.storage
-cat > test-ha/config/.storage/onboarding <<EOF
+# Only create if it doesn't exist (preserve existing state)
+if [ ! -f "test-ha/config/.storage/onboarding" ]; then
+    echo "📝 Creating onboarding bypass (first time setup)..."
+    mkdir -p test-ha/config/.storage
+    cat > test-ha/config/.storage/onboarding <<EOF
 {
     "data": {
         "done": ["core_config", "integration"]
@@ -497,6 +489,9 @@ cat > test-ha/config/.storage/onboarding <<EOF
     "version": 3
 }
 EOF
+else
+    echo "✅ Preserving existing Home Assistant state (user accounts, settings, etc.)"
+fi
 
 # Try docker compose (newer) first, fallback to docker-compose (older)
 # Define this early so it can be used for service builds

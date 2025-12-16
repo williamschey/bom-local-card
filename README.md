@@ -16,12 +16,19 @@ The Australian Bureau of Meteorology's radar API endpoint stopped working in Dec
 ## Features
 
 - 🌧️ **Live Radar Display**: View the latest BOM rain radar images for any Australian location
-- 🎬 **Animated Slideshow**: Play through radar frames to see precipitation movement
-- 📊 **Historical Data**: View radar history from 1 hour to 24 hours ago
-- 🎯 **Location-Based**: Support for any Australian suburb/state combination
+- 🎬 **Animated Slideshow**: Play through radar frames to see precipitation movement with smooth animations
+- 📊 **Historical Data**: View radar history from 1 hour to 24 hours ago, or custom time ranges
+- 🎯 **Location-Based**: Support for any Australian suburb/state combination with dropdown selection
 - 🔄 **Auto-Refresh**: Automatically updates radar data at configurable intervals
-- 🎨 **Beautiful UI**: Modern, responsive design that integrates seamlessly with Home Assistant themes
-- ⚙️ **Visual Editor**: Full GUI configuration editor (no YAML editing required)
+- 🎨 **Modern UI**: Sleek, responsive design that integrates seamlessly with Home Assistant themes
+- ⚙️ **Visual Editor**: Full GUI configuration editor with expandable sections (no YAML editing required)
+- 🎛️ **Flexible Display**: Granular control over metadata and controls visibility
+- 🖼️ **Image Customization**: Zoom (0.5x to 3.0x) and fit options (contain/cover/fill)
+- 📍 **Overlay Options**: Overlay controls and metadata on images to save space
+- ⌨️ **Keyboard Navigation**: Full keyboard support (arrow keys, spacebar, home/end)
+- ♿ **Accessible**: ARIA labels and screen reader support
+- 🔍 **Enhanced Error Handling**: Detailed error messages with retry suggestions and auto-retry
+- 📱 **Responsive**: Optimized for mobile, tablet, and desktop
 
 ## Prerequisites
 
@@ -138,14 +145,37 @@ For more detailed service setup and configuration options, see the [BOM Local Se
    **Service Configuration**:
    - **Service URL**: Base URL of your BOM Local Service (default: `http://localhost:8082`)
    - **Suburb**: The suburb name (e.g., `Pomona`, `Brisbane`) - **Required**
-   - **State**: State abbreviation (e.g., `QLD`, `NSW`, `VIC`) - **Required**
+   - **State**: State dropdown - Select from all Australian states - **Required**
    
    **Display**:
-   - **Card Title**: Optional custom title for the card
-   - **Show Metadata**: Toggle to show/hide cache status, observation time, and weather station info (default: `true`)
+   - **Show Card Title**: Toggle to show/hide card title (uses HA card header)
+   - **Card Title**: Custom title for the card (only shown if "Show Card Title" is enabled)
+   - **Show Metadata**: Toggle to show/hide metadata section (expandable for granular control)
+     - When expanded, you can control individual metadata items:
+       - Cache Status
+       - Observation Time
+       - Forecast Time
+       - Weather Station
+       - Distance
+       - Next Update
+       - Frame Times
+     - **Metadata Position**: Choose where to display metadata (Above Image, Below Image, Overlay on Image)
+     - **Metadata Style**: Choose display style (Cards, Compact, Minimal)
+   - **Show Controls**: Toggle to show/hide controls section (expandable for granular control)
+     - When expanded, you can control individual controls:
+       - Play/Pause Button
+       - Previous/Next Buttons
+       - Frame Slider
+       - Navigation Buttons (-10, +10, First, Last)
+       - Frame Info
+     - **Overlay Controls on Image**: Toggle to overlay controls on the radar image
+     - **Overlay Position**: Choose overlay position (Top, Bottom, Left, Right, Center)
+     - **Overlay Opacity**: Control overlay transparency (0.0 to 1.0)
+   - **Image Zoom**: Zoom level for radar images (0.5 = 50%, 1.0 = 100%, 2.0 = 200%, range: 0.5-3.0)
+   - **Image Fit**: How images fit in container (Contain, Cover, Fill)
    
    **Slideshow**:
-   - **Timespan**: Select historical data range - `latest` (Latest 7 frames), `1h`, `3h`, `6h`, `12h`, or `24h` (default: `latest`)
+   - **Timespan**: Select historical data range - `latest` (Latest 7 frames), `1h`, `3h`, `6h`, `12h`, `24h`, or `custom` (default: `latest`)
    - **Frame Interval**: Seconds between frames during animation (default: `2.0`, range: 0.5-10)
    - **Auto Play**: Automatically start animation when data loads (default: `true`)
    
@@ -183,19 +213,74 @@ custom_end_time: "2024-01-15T14:00:00Z"
 
 ### Configuration Options
 
+#### Service Configuration
+
 | Option | Type | Default | Required | Description |
 |--------|------|---------|----------|-------------|
 | `service_url` | string | `http://localhost:8082` | No | Base URL of the BOM Local Service |
 | `suburb` | string | - | **Yes** | Suburb name (e.g., "Pomona", "Brisbane") |
-| `state` | string | - | **Yes** | State abbreviation (e.g., "QLD", "NSW", "VIC") |
-| `card_title` | string | - | No | Custom title displayed at the top of the card |
-| `show_metadata` | boolean | `true` | No | Show/hide cache status, observation time, and weather station info |
+| `state` | string | - | **Yes** | State abbreviation (e.g., "QLD", "NSW", "VIC") - Use dropdown in editor |
+
+#### Display Options
+
+| Option | Type | Default | Required | Description |
+|--------|------|---------|----------|-------------|
+| `show_card_title` | boolean | `true` | No | Show/hide card title (uses HA card header) |
+| `card_title` | string | - | No | Custom title displayed in card header |
+| `show_metadata` | boolean \| object | `true` | No | Show/hide metadata. Can be `true`/`false` or object for granular control (see below) |
+| `show_controls` | boolean \| object | `true` | No | Show/hide controls. Can be `true`/`false` or object for granular control (see below) |
+| `image_zoom` | number | `1.0` | No | Image zoom level: 0.5 = 50%, 1.0 = 100%, 2.0 = 200% (range: 0.5-3.0) |
+| `image_fit` | string | `contain` | No | How image fits in container: `contain`, `cover`, or `fill` |
+| `overlay_controls` | boolean | `false` | No | Overlay controls on the radar image |
+| `overlay_position` | string | `bottom` | No | Overlay position: `top`, `bottom`, `left`, `right`, or `center` |
+| `overlay_opacity` | number | `0.9` | No | Overlay opacity (range: 0.0-1.0) |
+
+#### Metadata Display Configuration (when `show_metadata` is an object)
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `show_cache_status` | boolean | `true` | Show cache validity status |
+| `show_observation_time` | boolean | `true` | Show observation time (absolute and relative) |
+| `show_forecast_time` | boolean | `true` | Show forecast time |
+| `show_weather_station` | boolean | `true` | Show weather station name |
+| `show_distance` | boolean | `true` | Show distance to weather station |
+| `show_next_update` | boolean | `true` | Show next update time |
+| `show_frame_times` | boolean | `true` | Show frame observation times |
+| `position` | string | `above` | Where to display: `above`, `below`, or `overlay` |
+| `style` | string | `cards` | Display style: `cards`, `compact`, or `minimal` |
+
+#### Controls Display Configuration (when `show_controls` is an object)
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `show_play_pause` | boolean | `true` | Show play/pause button |
+| `show_prev_next` | boolean | `true` | Show previous/next buttons |
+| `show_slider` | boolean | `true` | Show frame slider |
+| `show_nav_buttons` | boolean | `true` | Show navigation buttons (First, -10, +10, Last) |
+| `show_frame_info` | boolean | `true` | Show frame information (frame number, timestamp) |
+| `position` | string | `below` | Where to display: `above`, `below`, or `overlay` |
+
+#### Slideshow Configuration
+
+| Option | Type | Default | Required | Description |
+|--------|------|---------|----------|-------------|
 | `timespan` | string | `latest` | No | Historical data timespan: `latest`, `1h`, `3h`, `6h`, `12h`, `24h`, or `custom` |
 | `frame_interval` | number | `2.0` | No | Seconds between frames during animation (range: 0.5-10) |
 | `auto_play` | boolean | `true` | No | Automatically start animation when data loads |
-| `refresh_interval` | number | `30` | No | Seconds between automatic data refreshes (range: 10-300) |
 | `custom_start_time` | string | - | No | ISO 8601 datetime for custom timespan start (requires `timespan: custom`) |
 | `custom_end_time` | string | - | No | ISO 8601 datetime for custom timespan end (requires `timespan: custom`) |
+
+#### Auto-Refresh Configuration
+
+| Option | Type | Default | Required | Description |
+|--------|------|---------|----------|-------------|
+| `refresh_interval` | number | `30` | No | Seconds between automatic data refreshes (range: 10-300) |
+
+#### Localization
+
+| Option | Type | Default | Required | Description |
+|--------|------|---------|----------|-------------|
+| `locale` | string | HA locale | No | Override locale for date/time formatting (e.g., "en-AU", "en-US") |
 
 ## Usage Examples
 
@@ -208,6 +293,81 @@ type: custom:bom-local-radar-card
 suburb: Brisbane
 state: QLD
 service_url: http://192.168.1.100:8082
+```
+
+### Minimal Display (Image Only)
+
+Show just the radar image with no controls or metadata:
+
+```yaml
+type: custom:bom-local-radar-card
+suburb: Brisbane
+state: QLD
+show_metadata: false
+show_controls: false
+```
+
+### Overlay Controls on Image
+
+Overlay controls on the radar image to save space:
+
+```yaml
+type: custom:bom-local-radar-card
+suburb: Brisbane
+state: QLD
+overlay_controls: true
+overlay_position: bottom
+overlay_opacity: 0.85
+show_metadata:
+  position: overlay
+  style: minimal
+```
+
+### Image Zoom
+
+Zoom in on the radar image (may pixelate at higher zoom levels):
+
+```yaml
+type: custom:bom-local-radar-card
+suburb: Brisbane
+state: QLD
+image_zoom: 1.5
+image_fit: contain
+```
+
+### Granular Metadata Control
+
+Show only specific metadata items:
+
+```yaml
+type: custom:bom-local-radar-card
+suburb: Brisbane
+state: QLD
+show_metadata:
+  show_cache_status: true
+  show_observation_time: true
+  show_weather_station: false
+  show_distance: false
+  show_next_update: false
+  show_frame_times: true
+  position: above
+  style: compact
+```
+
+### Granular Controls Control
+
+Show only specific controls:
+
+```yaml
+type: custom:bom-local-radar-card
+suburb: Brisbane
+state: QLD
+show_controls:
+  show_play_pause: true
+  show_slider: true
+  show_frame_info: true
+  show_nav_buttons: false
+  show_prev_next: false
 ```
 
 ### Historical Data (Last 3 Hours)
@@ -265,7 +425,7 @@ refresh_interval: 60
 
 ## Controls
 
-The card provides several controls for navigating radar frames:
+The card provides several controls for navigating radar frames (all can be individually shown/hidden):
 
 - **Play/Pause Button**: Start or stop the animation
 - **Previous/Next Buttons**: Navigate to the previous or next frame
@@ -274,8 +434,31 @@ The card provides several controls for navigating radar frames:
   - ⏮ First frame
   - -10 / +10: Jump backward/forward by 10 frames
   - ⏭ Last frame
+- **Frame Info**: Displays frame number, total frames, observation time, and progress percentage
 
-The card displays frame information including frame number, total frames, and timestamp.
+### Keyboard Navigation
+
+The card supports full keyboard navigation when focused:
+
+- `←` / `→`: Navigate to previous/next frame
+- `Space`: Play/pause animation
+- `Home`: Jump to first frame
+- `End`: Jump to last frame
+
+### Error Handling
+
+The card provides enhanced error handling with intelligent retry logic:
+
+- **Structured Error Messages**: Detailed error information from the service with error codes and types
+- **Smart Auto-Retry**: Automatically retries failed requests based on service recommendations:
+  - **Normal retries**: Auto-retries after service-suggested delay (typically 30-120 seconds)
+  - **Manual refresh recommended**: When previous update failed, shows message and skips auto-retry
+  - **Network issues**: Suggests checking network before retrying
+  - **Time range errors**: No auto-retry, suggests adjusting time range
+- **Error Details**: Shows error codes, previous update failures, available data ranges, and refresh endpoints
+- **Retry Button**: Manual retry option - text changes to "Retry Anyway" when manual refresh is recommended
+- **Better Cache Messages**: Clear messages for fresh start scenarios, cache generation status, and update progress
+- **Service Integration**: Respects service-calculated retry times and action recommendations
 
 ## Development
 
@@ -411,6 +594,50 @@ To test the card against a local version of the BOM Local Service (instead of th
 
 This builds the service from your local source and uses it in the test environment.
 
+## Changelog
+
+### Version 0.1.0 (Current)
+
+**Major Improvements:**
+- ✨ **Enhanced Error Handling**: Full support for structured API error responses with detailed error codes, retry suggestions, and intelligent auto-retry functionality
+- 🔄 **Smart Retry Logic**: Action-based retry behavior - respects service recommendations for when to auto-retry vs. manual refresh
+- 🎨 **Redesigned Editor**: Complete overhaul of the visual editor with native dropdowns, better layout, and expandable sections
+- 🖼️ **Image Display Fixes**: Fixed image centering issues and added zoom/fit options
+- 🎛️ **Granular Configuration**: Fine-grained control over metadata and controls visibility
+- 📍 **Overlay Support**: Overlay controls and metadata on images to save dashboard space
+- ⌨️ **Keyboard Navigation**: Full keyboard support for accessibility
+- ♿ **Accessibility**: ARIA labels and screen reader support
+- 🔍 **Better Error Messages**: Detailed error information including previous update failures and available data ranges
+
+**New Configuration Options:**
+- `show_card_title`: Control card title visibility
+- `show_metadata`: Object-based configuration for granular metadata control
+- `show_controls`: Object-based configuration for granular controls control
+- `image_zoom`: Zoom images from 0.5x to 3.0x
+- `image_fit`: Control how images fit (contain/cover/fill)
+- `overlay_controls`: Overlay controls on image
+- `overlay_position`: Control overlay position
+- `overlay_opacity`: Control overlay transparency
+
+**Bug Fixes:**
+- Fixed editor dropdown crashes
+- Fixed image centering issues
+- Fixed editor layout problems
+- Improved error handling for fresh cache scenarios
+
+**Service Integration:**
+- Enhanced compatibility with service's action-based error recommendations
+- Proper handling of `manual_refresh_recommended` action type
+- Respects service-calculated retry times based on update progress
+- Displays refresh endpoint URLs in error details
+
+### Version 0.0.1 (Initial Release)
+
+- Initial release with basic radar display functionality
+- Support for latest frames and historical data
+- Basic configuration options
+- Visual editor support
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details
@@ -427,20 +654,61 @@ MIT License - see [LICENSE](LICENSE) file for details
 - Ensure both `suburb` and `state` are configured
 - Verify the configuration using the visual editor
 
-### Card Shows "Failed to fetch radar data" or "Cache not ready"
+### Card Shows Error Messages
 
-- **Check BOM Local Service is running**: Verify the service is accessible at the configured `service_url`
-- **Verify Service URL**: Ensure the URL is correct and reachable from your Home Assistant instance
-- **Check Cache Status**: The service may be generating the cache for your location. Wait a minute and refresh
-- **Network Access**: If the service is on a different machine, ensure network connectivity and firewall rules allow access
+The card now provides detailed error messages with intelligent retry behavior:
+
+- **"Cache Not Ready" / "CACHE_NOT_FOUND"**: 
+  - This is normal for fresh installations or new locations
+  - The service automatically triggers a cache update in the background
+  - The card will auto-retry after the service-suggested time (typically 30-120 seconds, calculated based on update progress)
+  - You can manually retry using the "Retry Now" button
+  - **Check BOM Local Service is running**: Verify the service is accessible at the configured `service_url`
+  - **Verify Service URL**: Ensure the URL is correct and reachable from your Home Assistant instance
+  - **Wait for Cache Generation**: First-time cache generation takes 30-60 seconds
+
+- **"Previous Update Failed" / "Manual Refresh Recommended"**:
+  - A previous cache update attempt failed
+  - The error details will show the specific failure reason and error code
+  - **Auto-retry is disabled** - the card shows "Manual refresh recommended" message
+  - The retry button changes to "Retry Anyway" if you want to force a retry
+  - Check service logs for more details about the failure
+  - The error details include a refresh endpoint URL for manual cache refresh
+
+- **"TIME_RANGE_ERROR"**:
+  - The requested time range exceeds available data or maximum allowed duration
+  - Error details show available data range and requested range
+  - **Auto-retry is disabled** - adjust your timespan to match available data
+  - The service suggests the available time range in error details
+
+- **Network Errors**:
+  - Check network connectivity between Home Assistant and the service
+  - Verify firewall rules allow access
+  - Check CORS configuration if accessing from browser
+  - The service may suggest waiting longer before retrying network-related errors
+
+**Understanding Error Actions:**
+- The service provides an `action` field in error responses that guides retry behavior:
+  - `retry_after_seconds`: Card will auto-retry after the suggested delay
+  - `manual_refresh_recommended`: Card shows message but doesn't auto-retry (previous update failed)
+  - `check_network_and_retry`: Suggests checking network before retrying
+  - `adjust_time_range`: No auto-retry, suggests adjusting time range
 
 ### Card Shows "Radar data not found"
 
 - The cache may not be available for your location yet
-- Trigger a cache update via the BOM Local Service API:
-  ```bash
-  curl -X POST http://your-service-url/api/cache/YourSuburb/YourState/refresh
-  ```
+- The card will automatically retry after the service-suggested delay
+- If auto-retry is disabled (manual refresh recommended), you can:
+  - Click "Retry Anyway" button in the error message
+  - Or trigger a cache update via the BOM Local Service API:
+    ```bash
+    curl -X POST http://your-service-url/api/cache/YourSuburb/YourState/refresh
+    ```
+  - The error details include the refresh endpoint URL for your location
+- Check the error message details for specific information about cache status, including:
+  - Whether an update is in progress
+  - When the next update is expected
+  - Previous update failure reasons (if applicable)
 
 ### Images Don't Load
 
@@ -453,6 +721,19 @@ MIT License - see [LICENSE](LICENSE) file for details
 - Check that `auto_play` is set to `true` (default)
 - Verify frames are loading (check frame count display)
 - Try manually clicking the Play button
+- Check that controls are visible (may be hidden via `show_controls` configuration)
+
+### Editor Issues
+
+- **Dropdowns not working**: The editor now uses native HTML select elements for better compatibility
+- **Layout looks jumbled**: The editor has been redesigned with better spacing and organization
+- **State selection**: Use the dropdown to select from all Australian states (no need to type abbreviations)
+
+### Image Display Issues
+
+- **Image not centered**: This has been fixed in the latest version
+- **Image too small/large**: Use the `image_zoom` option (0.5 to 3.0) to adjust size
+- **Image doesn't fit properly**: Try different `image_fit` options (`contain`, `cover`, `fill`)
 
 ### Service URL Configuration
 
