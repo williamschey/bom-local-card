@@ -1,0 +1,51 @@
+{
+  "name": "bom-local-radar-card",
+  "version": "1.0.0",
+  "description": "A rain radar card using the local BOM service",
+  "module": "bom-local-radar-card.js",
+  "keywords": [
+    "home-assistant",
+    "homeassistant",
+    "hass",
+    "automation",
+    "lovelace",
+    "custom-cards",
+    "bom",
+    "radar",
+    "weather"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexhopeoconnor/bom-local-card.git"
+  },
+  "author": "Alex Hope-O'Connor",
+  "license": "MIT",
+  "dependencies": {
+    "custom-card-helpers": "^1.9.0",
+    "lit": "^3.1.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "rollup": "^2.79.1",
+    "typescript": "~5.3.3"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "build:docker": "bash scripts/build-docker.sh",
+    "watch": "rollup -c --watch",
+    "test": "./run.sh test",
+    "test:ha": "./run.sh test",
+    "test:ha:down": "docker compose -f docker-compose.test.yml down 2>/dev/null || docker-compose -f docker-compose.test.yml down",
+    "test:ha:clean": "./run.sh clean"
+  },
+  "_comment": "Note: All commands can be run without npm using: ./run.sh [build|test|clean]"
+}
+
+
+
+
+
+
+
