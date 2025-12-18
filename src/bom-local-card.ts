@@ -3,7 +3,7 @@ import { property, customElement, state } from 'lit/decorators.js';
 import { HomeAssistant, LovelaceCardEditor, LovelaceCard } from 'custom-card-helpers';
 import './editor';
 import { BomLocalRadarCardConfig, RadarResponse, RadarFrame, MetadataDisplayConfig, ControlsDisplayConfig, ErrorState, GridOptions } from './types';
-import { CARD_VERSION, DEFAULT_SERVICE_URL, DEFAULT_FRAME_INTERVAL, DEFAULT_REFRESH_INTERVAL, DEFAULT_RESTART_DELAY } from './const';
+import { CARD_VERSION, DEFAULT_FRAME_INTERVAL, DEFAULT_REFRESH_INTERVAL, DEFAULT_RESTART_DELAY } from './const';
 import { RadarApiService } from './services/radar-api-service';
 import { cardStyles } from './styles/card-styles';
 import { imageStyles } from './styles/image-styles';
