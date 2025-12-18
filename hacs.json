@@ -1,6 +1,4 @@
 {
   "name": "BOM Local Radar",
-  "content_type": "integration",
-  "domains": ["bom_local"],
   "render_readme": true
 }
