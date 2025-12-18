@@ -19,5 +19,5 @@ jobs:
       - name: HACS validation
         uses: "hacs/action@main"
         with:
-          category: "plugin"
+          category: "integration"
 

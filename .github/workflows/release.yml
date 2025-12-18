@@ -23,13 +23,13 @@ jobs:
           chmod +x run.sh
           ./run.sh build npm prod
 
-      - name: Show dist contents (sanity check)
-        run: ls -la dist || true
+      - name: Show build contents (sanity check)
+        run: ls -la custom_components/bom_local/www/ || true
 
       - name: Upload build to release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/**
+          files: custom_components/bom_local/www/bom-local-card.js
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
