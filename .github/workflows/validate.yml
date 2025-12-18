@@ -16,17 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Build Card
-        run: |
-          chmod +x run.sh
-          ./run.sh build npm
-          cp dist/bom-local-card.js .
-
       - name: HACS validation
         uses: "hacs/action@main"
         with:
