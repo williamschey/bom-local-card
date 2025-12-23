@@ -1,8 +1,5 @@
 <p align="center">
-  <img
-    src="https://github.com/user-attachments/assets/5f352818-aab0-4087-a604-856641abe0b2"
-    width="500"
-  />
+  <img width="256" height="auto" alt="icon" src="https://github.com/user-attachments/assets/6f712fbd-4f42-49d4-9ddb-1767bb43551a" />
 </p>
 
 # BOM Local Card
